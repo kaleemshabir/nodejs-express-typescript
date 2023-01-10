@@ -10,6 +10,10 @@ const TaskSchema = new Schema({
     type     : Schema.Types.String,
     unique   : true,
     index    : true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
   }
 }, {timestamps: true});
 
