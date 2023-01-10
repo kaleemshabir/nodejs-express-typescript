@@ -4,13 +4,21 @@ import {Task} from "../models/task.model";
 import { asyncHandler } from '../middleware/async';
 
 const router: Router = Router();
+export interface IGetUserAuthInfoRequest extends Request {
+  user: {
+    _id: string,
+    id:string,
+    email: string,
+    
+  } // or any other type
+}
 
 /**
- * GET /api/Task
+ * GET /api/list-tasks
  */
-router.get('/list-tasks',protect,  asyncHandler(async(req: Request | any, res: Response) => {
+router.get('/list-tasks',protect,  asyncHandler(async(req: Request, res: Response) => {
 
-    const tasks = await Task.find({},{_id:0}).lean();
+    const tasks = await Task.find({},{_id:0}).populate("user", "email").lean();
     res.status(200).json({
      tasks: tasks
     });
@@ -20,23 +28,23 @@ router.get('/list-tasks',protect,  asyncHandler(async(req: Request | any, res: R
 
 
 /**
- * POST /api/Tasks
+ * POST /api/create-tasks
  */
-router.post('/create-task',protect, asyncHandler(async(req: Request, res: Response, next: NextFunction) => {
+router.post('/create-task', protect,asyncHandler(async(req: IGetUserAuthInfoRequest, res: Response, next: NextFunction) => {
     const {name} = req.body;
-    let task = await Task.findOne({name: name});
-    if(task) {
-      return res.status(400).json({message:"task with this name already exists!"})
-    }
+    const user = req.user._id;
+  
     if(!name ) {
       return res.status(400).json({message:"name is required field"});
     }
 
-   task = await Task.create({
-    name
+   let task = await Task.create({
+    name,user
+
   });
   task = task.toObject();
  delete task._id;
+ task.user = req.user.email;
 res.status(201).json({task});
   
 
